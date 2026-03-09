@@ -25,7 +25,7 @@ export default function LandingPage() {
             {/* ─── NAVBAR ─── */}
             <nav className="fixed top-0 left-0 right-0 z-30 glass border-b border-[#E5E0D8]/60">
                 <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-6.5">
                         <div className="w-8 h-8 bg-[#1B3A6B] rounded-lg flex items-center justify-center">
                             <BarChart2 size={15} className="text-white" />
                         </div>
