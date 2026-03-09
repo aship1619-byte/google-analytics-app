@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --cream: #F7F5F0;
+    --ink: #1A1814;
+    --mid: #8C8578;
+    --line: #E5E0D8;
+    --accent: #1B3A6B;
+    --accent-light: #EDE8E0;
+    --accent-warm: #C4956A;
+    --warn: #C44B2B;
+    --card: #FFFFFF;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--cream);
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+    font-family: var(--font-display);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* ── Card lift on hover ── */
+.card-hover {
+    transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1),
+                box-shadow 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.card-hover:hover {
+    transform: translateY(-6px);
+    box-shadow:
+        0 12px 32px rgba(26, 24, 20, 0.08),
+        0 4px 12px rgba(26, 24, 20, 0.04);
+}
+
+/* ── Button lift ── */
+.btn-hover {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.btn-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(27, 58, 107, 0.18);
+}
+.btn-hover:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* ── Fade-up entrance animation ── */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up {
+    animation: fadeUp 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    opacity: 0;
+}
+.fade-up-delay-1 { animation-delay: 0.1s; }
+.fade-up-delay-2 { animation-delay: 0.2s; }
+.fade-up-delay-3 { animation-delay: 0.3s; }
+.fade-up-delay-4 { animation-delay: 0.4s; }
+
+/* ── Subtle float for decorative elements ── */
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
+}
+.float {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* ── Glass panel ── */
+.glass {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
