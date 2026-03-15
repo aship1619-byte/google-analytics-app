@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify";
+import { getPool } from "../plugins/mysql";
 
 export default async function authRoutes(server: FastifyInstance) {
     server.post("/auth", async (request, reply) => {
@@ -9,6 +10,7 @@ export default async function authRoutes(server: FastifyInstance) {
         }
 
         try {
+            // Verify token via Firebase public API
             const res = await fetch(
                 `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.FIREBASE_API_KEY}`,
                 {
@@ -32,10 +34,44 @@ export default async function authRoutes(server: FastifyInstance) {
             }
 
             const firebaseUser = data.users[0];
+            const pool = getPool();
 
+            // Upsert user into DB
+            const [rows] = await pool.execute(
+                `INSERT INTO users (firebase_uid, email, display_name, photo_url)
+                 VALUES (?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                 email = VALUES(email),
+                 display_name = VALUES(display_name),
+                 photo_url = VALUES(photo_url)`,
+                [
+                    firebaseUser.localId,
+                    firebaseUser.email,
+                    firebaseUser.displayName || null,
+                    firebaseUser.photoUrl || null,
+                ]
+            ) as any;
+
+            // Get the user ID from DB
+            const [users] = await pool.execute(
+                `SELECT id FROM users WHERE firebase_uid = ?`,
+                [firebaseUser.localId]
+            ) as any;
+
+            const dbUser = users[0];
+
+            // Create subscription record if not exists
+            await pool.execute(
+                `INSERT IGNORE INTO subscriptions (user_id, plan, apps_allowed)
+                 VALUES (?, 'free', 1)`,
+                [dbUser.id]
+            );
+
+            // Sign JWT with db_id included
             const token = server.jwt.sign(
                 {
                     uid: firebaseUser.localId,
+                    db_id: dbUser.id,
                     email: firebaseUser.email,
                     name: firebaseUser.displayName,
                     picture: firebaseUser.photoUrl,
@@ -53,7 +89,7 @@ export default async function authRoutes(server: FastifyInstance) {
                 })
                 .send({ success: true });
         } catch (err) {
-            server.log.error(err);
+            server.log.error({ err }, "Auth error");
             return reply.status(401).send({ error: "Invalid token" });
         }
     });

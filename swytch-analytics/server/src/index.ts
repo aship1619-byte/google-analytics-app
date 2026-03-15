@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import fastifyJwt from "@fastify/jwt";
 import fastifyCookie from "@fastify/cookie";
+import mysqlPlugin from "./plugins/mysql";
 import authRoutes from "./routes/auth";
 
 const server = Fastify({ logger: true });
@@ -19,6 +20,8 @@ const start = async () => {
     await server.register(fastifyJwt, {
         secret: process.env.JWT_SECRET || "dev_secret_change_in_production",
     });
+
+    await server.register(mysqlPlugin);
 
     await server.register(authRoutes, { prefix: "/api" });
 
