@@ -2,6 +2,7 @@ import "dotenv/config";
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import fastifyJwt from "@fastify/jwt";
+import fastifyCookie from "@fastify/cookie";
 import authRoutes from "./routes/auth";
 
 const server = Fastify({ logger: true });
@@ -12,6 +13,8 @@ const start = async () => {
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     });
+
+    await server.register(fastifyCookie);
 
     await server.register(fastifyJwt, {
         secret: process.env.JWT_SECRET || "dev_secret_change_in_production",

@@ -9,7 +9,6 @@ export default async function authRoutes(server: FastifyInstance) {
         }
 
         try {
-            // Verify token via Firebase public API
             const res = await fetch(
                 `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.FIREBASE_API_KEY}`,
                 {
@@ -19,7 +18,14 @@ export default async function authRoutes(server: FastifyInstance) {
                 }
             );
 
-            const data = await res.json() as { users?: { localId: string; email: string; displayName: string; photoUrl: string }[] };
+            const data = await res.json() as {
+                users?: {
+                    localId: string;
+                    email: string;
+                    displayName: string;
+                    photoUrl: string;
+                }[]
+            };
 
             if (!data.users || data.users.length === 0) {
                 return reply.status(401).send({ error: "Invalid token" });
@@ -37,7 +43,15 @@ export default async function authRoutes(server: FastifyInstance) {
                 { expiresIn: "7d" }
             );
 
-            return reply.send({ success: true, token });
+            return reply
+                .setCookie("token", token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "lax",
+                    path: "/",
+                    maxAge: 60 * 60 * 24 * 7,
+                })
+                .send({ success: true });
         } catch (err) {
             server.log.error(err);
             return reply.status(401).send({ error: "Invalid token" });
@@ -45,6 +59,8 @@ export default async function authRoutes(server: FastifyInstance) {
     });
 
     server.delete("/auth", async (request, reply) => {
-        return reply.send({ success: true });
+        return reply
+            .clearCookie("token", { path: "/" })
+            .send({ success: true });
     });
 }
