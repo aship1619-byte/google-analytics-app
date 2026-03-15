@@ -1,0 +1,9 @@
+{
+  "extends": "./swytch-analytics/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "./swytch-analytics",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
