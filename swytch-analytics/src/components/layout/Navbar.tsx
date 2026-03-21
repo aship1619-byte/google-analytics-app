@@ -52,6 +52,15 @@ export default function Navbar() {
                     >
                         Settings
                     </Link>
+                    <Link
+                        href="/billing"
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${pathname === "/billing"
+                                ? "bg-[#EDE8E0] text-[#1A1814]"
+                                : "text-[#8C8578] hover:bg-[#EDE8E0] hover:text-[#1A1814]"
+                            }`}
+                    >
+                        Billing
+                    </Link>
                 </div>
 
                 {/* Right — User + Logout */}

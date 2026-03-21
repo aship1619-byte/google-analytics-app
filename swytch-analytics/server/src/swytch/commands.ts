@@ -12,7 +12,7 @@ export async function verifyFirebaseToken(idToken: string) {
     try {
         const result = await exec("accounts:lookup.accounts:lookup.create", {
             params: {
-                key: process.env.FIREBASE_API_KEY,
+                key: process.env.FIREBASE_API_KEY, // from .env file
             },
             body: { idToken },
         });
