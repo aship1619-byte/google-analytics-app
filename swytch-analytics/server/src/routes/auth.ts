@@ -26,7 +26,7 @@ async function firebaseFallback(idToken: string) {
 export default async function authRoutes(server: FastifyInstance) {
 
     server.post("/auth", async (request, reply) => {
-        const { idToken } = request.body as { idToken: string };
+        const { idToken, accessToken } = request.body as { idToken: string, accessToken?: string };
 
         if (!idToken) {
             return reply.status(400).send({ error: "idToken is required" });
@@ -166,6 +166,13 @@ export default async function authRoutes(server: FastifyInstance) {
                     path: "/",
                     maxAge: 60 * 60 * 24 * 7,
                 })
+                .setCookie("google_access_token", accessToken || "", {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "lax",
+                    path: "/",
+                    maxAge: 60 * 60 * 24 * 7,
+                })
                 .send({ success: true });
 
         } catch (err) {
@@ -180,7 +187,16 @@ export default async function authRoutes(server: FastifyInstance) {
 
     server.delete("/auth", async (request, reply) => {
         return reply
-            .clearCookie("token", { path: "/" })
+            .clearCookie("token", {
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+            })
+            .clearCookie("google_access_token", {
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+            })
             .send({ success: true });
     });
 }
