@@ -23,12 +23,14 @@ const METRICS_KEY = "dashboard_metrics";
 const BUSINESS_SETUP_KEY = "business_setup";
 
 const METRIC_LABELS: Record<string, string> = {
-    users: "Users",
+    users: "VisitorsThis Week",
     sessions: "Sessions",
     pageViews: "Page Views",
     bounceRate: "Bounce Rate",
     avgSessionDuration: "Avg Session Duration",
-    newUsers: "New Users",
+    newUsers: "New Visitors",
+    customerActions: "Customer Actions",
+    conversionRate: "Conversion Rate"
 };
 
 export default function DashboardPage() {
@@ -56,6 +58,7 @@ export default function DashboardPage() {
     const [eventsData, setEventsData] = useState<any>({});
     const [locationsData, setLocationsData] = useState<any>({});
     const [hourlyData, setHourlyData] = useState<any>({});
+    const [intelligenceData, setIntelligenceData] = useState<{ insights: string[], alerts: string[] }>({ insights: [], alerts: [] });
 
     useEffect(() => {
 
@@ -72,7 +75,8 @@ export default function DashboardPage() {
             try {
                 const res = await fetch("http://localhost:4000/api/ga/properties", { credentials: "include" });
                 if (res.status === 401) {
-                    window.location.href = "/login";
+                    setProperties([]);
+                    setGaModalOpen(true);
                     return;
                 }
                 const data = await res.json();
@@ -160,14 +164,15 @@ export default function DashboardPage() {
 
             const cleanId = propertyId.replace("properties/", "");
 
-            const [trafficRes, sourcesRes, devicesRes, pagesRes, eventsRes, locationsRes, hourlyRes] = await Promise.all([
+            const [trafficRes, sourcesRes, devicesRes, pagesRes, eventsRes, locationsRes, hourlyRes, insightsRes] = await Promise.all([
                 fetch(`http://localhost:4000/api/ga/timeseries/${cleanId}`, { credentials: "include" }),
                 fetch(`http://localhost:4000/api/ga/sources/${cleanId}`, { credentials: "include" }),
                 fetch(`http://localhost:4000/api/ga/devices/${cleanId}`, { credentials: "include" }),
                 fetch(`http://localhost:4000/api/ga/pages/${cleanId}`, { credentials: "include" }),
                 fetch(`http://localhost:4000/api/ga/events/${cleanId}`, { credentials: "include" }),
                 fetch(`http://localhost:4000/api/ga/locations/${cleanId}`, { credentials: "include" }),
-                fetch(`http://localhost:4000/api/ga/hourly/${cleanId}`, { credentials: "include" })
+                fetch(`http://localhost:4000/api/ga/hourly/${cleanId}`, { credentials: "include" }),
+                fetch(`http://localhost:4000/api/ga/insights/${cleanId}`, { credentials: "include" })
             ]);
 
             if (trafficRes.status === 401) {
@@ -175,14 +180,15 @@ export default function DashboardPage() {
                 return;
             }
 
-            const [trafficData, sources, devices, pages, events, locations, hourly] = await Promise.all([
+            const [trafficData, sources, devices, pages, events, locations, hourly, intelligence] = await Promise.all([
                 trafficRes.json(),
                 sourcesRes.json(),
                 devicesRes.json(),
                 pagesRes.json(),
                 eventsRes.json(),
                 locationsRes.json(),
-                hourlyRes.json()
+                hourlyRes.json(),
+                insightsRes.json()
             ]);
 
             setChartData(trafficData);
@@ -192,6 +198,7 @@ export default function DashboardPage() {
             setEventsData(events);
             setLocationsData(locations);
             setHourlyData(hourly);
+            setIntelligenceData(intelligence);
 
         } catch (err) {
 
@@ -210,9 +217,9 @@ export default function DashboardPage() {
     // Auto-select metrics based on Primary Goal
     const determineMetricsForGoal = (goal: string): string[] => {
         if (goal === "Online orders") {
-            return ["users", "sessions", "pageViews"];
+            return ["users", "newUsers", "customerActions", "conversionRate", "sessions", "pageViews"];
         }
-        return ["users", "sessions", "bounceRate", "pageViews"];
+        return ["users", "newUsers", "customerActions", "conversionRate", "sessions", "bounceRate", "pageViews"];
     };
 
     const handleSaveMetrics = (metrics: string[]) => {
@@ -264,10 +271,10 @@ export default function DashboardPage() {
                 setSelectedMetrics(optimalMetrics);
             } catch (e) {
                 console.error("Failed to parse business setup info.");
-                setSelectedMetrics(["users", "sessions", "pageViews", "bounceRate"]); // basic fallback
+                setSelectedMetrics(["users", "newUsers", "customerActions", "conversionRate", "sessions", "pageViews", "bounceRate"]); // basic fallback
             }
         } else {
-            setSelectedMetrics(["users", "sessions", "pageViews", "bounceRate"]); // fallback
+            setSelectedMetrics(["users", "newUsers", "customerActions", "conversionRate", "sessions", "pageViews", "bounceRate"]); // fallback
         }
 
     };
@@ -337,42 +344,26 @@ export default function DashboardPage() {
                 {selectedProperty && (
 
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-
-                            <MetricCard
-                                title="Visitors This Week"
-                                value={loadingAnalytics ? "..." : (metricsData.users ?? "—")}
-                            />
-                            <MetricCard
-                                title="New Visitors"
-                                value={loadingAnalytics ? "..." : (metricsData.newUsers ?? "—")}
-                            />
-                            <MetricCard
-                                title="Customer Actions"
-                                value={loadingAnalytics ? "..." : (eventsData?.values?.reduce?.((a: number, b: number) => a + b, 0) ?? "—")}
-                            />
-                            <MetricCard
-                                title="Conversion Rate"
-                                value={loadingAnalytics ? "..." : (
-                                    (metricsData.users && eventsData?.values?.length > 0)
-                                        ? ((eventsData.values.reduce((a: number, b: number) => a + b, 0) / metricsData.users) * 100).toFixed(2) + "%"
-                                        : "0%"
-                                )}
-                            />
-
-                        </div>
-
                         {selectedMetrics.length > 0 && (
                             <div className="mb-8">
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                                     {selectedMetrics.map((metric) => {
-                                        let val: any = metricsData[metric as keyof typeof metricsData] ?? "—";
-                                        if (metric === "bounceRate" && typeof val === "number") {
-                                            val = (val * 100).toFixed(2) + "%";
-                                        } else if (metric === "avgSessionDuration" && typeof val === "number") {
-                                            const mins = Math.floor(val / 60);
-                                            const secs = Math.floor(val % 60);
-                                            val = `${mins}m ${secs}s`;
+                                        let val: any = "—";
+                                        if (metric === "customerActions") {
+                                            val = eventsData?.values?.reduce?.((a: number, b: number) => a + b, 0) ?? "—";
+                                        } else if (metric === "conversionRate") {
+                                            val = (metricsData.users && eventsData?.values?.length > 0)
+                                                ? ((eventsData.values.reduce((a: number, b: number) => a + b, 0) / metricsData.users) * 100).toFixed(2) + "%"
+                                                : "0%";
+                                        } else {
+                                            val = metricsData[metric as keyof typeof metricsData] ?? "—";
+                                            if (metric === "bounceRate" && typeof val === "number") {
+                                                val = (val * 100).toFixed(2) + "%";
+                                            } else if (metric === "avgSessionDuration" && typeof val === "number") {
+                                                const mins = Math.floor(val / 60);
+                                                const secs = Math.floor(val % 60);
+                                                val = `${mins}m ${secs}s`;
+                                            }
                                         }
                                         return (
                                             <MetricCard
@@ -387,7 +378,7 @@ export default function DashboardPage() {
                         )}
 
                         <div className="mb-8">
-                            <InsightsPanel metrics={metricsData} sources={sourcesData} devices={devicesData} hourly={hourlyData} />
+                            <InsightsPanel data={intelligenceData} />
                         </div>
 
                         <div className="grid grid-cols-1 gap-6">
@@ -440,6 +431,7 @@ export default function DashboardPage() {
                 isOpen={metricsModalOpen}
                 onCloseAction={() => setMetricsModalOpen(false)}
                 onSaveAction={handleSaveMetrics}
+                currentSelection={selectedMetrics}
             />
 
         </div>

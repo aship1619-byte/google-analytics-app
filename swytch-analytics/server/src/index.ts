@@ -9,8 +9,11 @@ import authRoutes from "./routes/auth";
 import dashboardRoutes from "./routes/dashboard";
 import gaRoutes from "./routes/ga";
 import appsRoutes from "./routes/apps";
+import oauthRoutes from "./routes/oauth";
 
 import { startEmailReportsCron } from "./services/email_reports";
+import { startAnalyticsCron } from "./cron/analyticsSync";
+import { startInsightsCron } from "./cron/insightsSync";
 
 const server = Fastify({ logger: true });
 
@@ -43,6 +46,7 @@ const start = async () => {
     
     //apps routes
     await server.register(appsRoutes, { prefix: "/api" });
+    await server.register(oauthRoutes, { prefix: "/api" });
 
     // Dashboard routes
     await server.register(dashboardRoutes, { prefix: "/api" });
@@ -52,10 +56,12 @@ const start = async () => {
         return { status: "ok" };
     });
 
+    // Start scheduled cron jobs
+    startEmailReportsCron();
+    startAnalyticsCron();
+    startInsightsCron();
+
     try {
-
-        startEmailReportsCron();
-
         await server.listen({
             port: Number(process.env.PORT) || 4000,
             host: "0.0.0.0",

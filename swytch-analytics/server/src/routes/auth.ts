@@ -26,7 +26,7 @@ async function firebaseFallback(idToken: string) {
 export default async function authRoutes(server: FastifyInstance) {
 
     server.post("/auth", async (request, reply) => {
-        const { idToken, accessToken } = request.body as { idToken: string, accessToken?: string };
+        const { idToken, accessToken, refreshToken } = request.body as { idToken: string, accessToken?: string, refreshToken?: string };
 
         if (!idToken) {
             return reply.status(400).send({ error: "idToken is required" });
@@ -108,21 +108,24 @@ export default async function authRoutes(server: FastifyInstance) {
         try {
             const pool = getPool();
 
-            // Upsert user — matches actual DB schema (firebase_uid, display_name, photo_url, id INT AUTO_INCREMENT)
-            await pool.execute(
-                `INSERT INTO users (firebase_uid, email, display_name, photo_url)
-                 VALUES (?, ?, ?, ?)
-                 ON DUPLICATE KEY UPDATE
-                     email        = VALUES(email),
-                     display_name = VALUES(display_name),
-                     photo_url    = VALUES(photo_url)`,
-                [
-                    firebaseUser.localId,
-                    firebaseUser.email,
-                    firebaseUser.displayName || null,
-                    firebaseUser.photoUrl || null,
-                ]
-            );
+            // Upsert user — matches actual DB schema
+            const query = `
+                INSERT INTO users (firebase_uid, email, display_name, photo_url, google_refresh_token)
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    email                = VALUES(email),
+                    display_name         = VALUES(display_name),
+                    photo_url            = VALUES(photo_url),
+                    google_refresh_token = COALESCE(VALUES(google_refresh_token), google_refresh_token)
+            `;
+            
+            await pool.execute(query, [
+                firebaseUser.localId,
+                firebaseUser.email,
+                firebaseUser.displayName || null,
+                firebaseUser.photoUrl || null,
+                refreshToken || null
+            ]);
 
             // Get internal DB user id
             const [rows] = await pool.execute(

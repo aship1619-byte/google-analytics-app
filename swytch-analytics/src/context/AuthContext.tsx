@@ -49,6 +49,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const credential = GoogleAuthProvider.credentialFromResult(result);
             const accessToken = credential?.accessToken;
+            
+            // Firebase stores the identity provider's refresh token here if access_type=offline
+            const googleRefreshToken = (result as any)._tokenResponse?.refreshToken || null;
+
+            console.log("Captured Google Refresh Token:", googleRefreshToken ? "YES" : "NO");
 
             const res = await fetch("http://localhost:4000/api/auth", {
                 method: "POST",
@@ -56,7 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 credentials: "include",
                 body: JSON.stringify({
                     idToken,
-                    accessToken: credential?.accessToken || null
+                    accessToken: accessToken || null,
+                    refreshToken: googleRefreshToken
                 })
             });
 
