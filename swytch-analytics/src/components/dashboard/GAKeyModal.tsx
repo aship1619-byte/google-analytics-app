@@ -43,6 +43,7 @@ export default function GAKeyModal({
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [selected, setSelected] = useState("");
     const [loading, setLoading] = useState(false);
+    const [needsAuth, setNeedsAuth] = useState(false);
 
     const [activeTab, setActiveTab] = useState<"select" | "create">("select");
     const [creating, setCreating] = useState(false);
@@ -72,6 +73,11 @@ export default function GAKeyModal({
                     "http://localhost:4000/api/ga/properties",
                     { credentials: "include" }
                 );
+
+                if (res.status === 401) {
+                    setNeedsAuth(true);
+                    return;
+                }
 
                 const data = await res.json();
 
@@ -110,6 +116,20 @@ export default function GAKeyModal({
             onCloseAction();
         }
 
+    };
+
+    const handleOAuthConnect = async () => {
+        try {
+            setLoading(true);
+            const res = await fetch("http://localhost:4000/api/ga/oauth/url", { credentials: "include" });
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } catch (err) {
+            console.error("Failed to get OAuth URL", err);
+            setLoading(false);
+        }
     };
 
     const handleCreateProperty = async () => {
@@ -207,6 +227,24 @@ export default function GAKeyModal({
                             setCreatedMeasurementId("");
                             onCloseAction();
                         }}>I've Added The Code</Button>
+                    </div>
+                </div>
+            ) : needsAuth ? (
+                <div className="text-center py-6 px-4">
+                    <div className="bg-orange-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#1A1814] mb-2">Connect Google Analytics</h3>
+                    <p className="text-sm text-[#8C8578] mb-8 max-w-sm mx-auto">
+                        To automatically generate your dashboard and securely keep it synced overnight, authorize our platform to view your Google Analytics.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <Button onClick={handleOAuthConnect} disabled={loading}>
+                            {loading ? "Connecting..." : "Authorize with Google"}
+                        </Button>
+                        <Button variant="outline" onClick={onCloseAction}>Cancel</Button>
                     </div>
                 </div>
             ) : (
