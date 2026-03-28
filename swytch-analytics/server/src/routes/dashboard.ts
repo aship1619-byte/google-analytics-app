@@ -1,9 +1,6 @@
 import { FastifyInstance } from "fastify";
-import { exec } from "child_process";
-import util from "util";
 import { getPool } from "../plugins/mysql";
-
-const execAsync = util.promisify(exec);
+import swytchExec from "../swytch/client";
 
 export default async function dashboardRoutes(server: FastifyInstance) {
 
@@ -11,6 +8,11 @@ export default async function dashboardRoutes(server: FastifyInstance) {
 
     const user = await request.jwtVerify() as any;
     const { appId } = request.params as any;
+
+    const accessToken = request.cookies.google_access_token;
+    if (!accessToken) {
+      return reply.status(401).send({ error: "Google access token missing" });
+    }
 
     const pool = getPool();
 
@@ -34,9 +36,12 @@ export default async function dashboardRoutes(server: FastifyInstance) {
       : `properties/${propertyId}`;
 
     const input = {
-  property: propertyPath,
-  body: {
-    dateRanges: [
+      property: propertyPath,
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      },
+      body: {
+        dateRanges: [
       { startDate: "7daysAgo", endDate: "today" }
     ],
 
@@ -60,25 +65,15 @@ export default async function dashboardRoutes(server: FastifyInstance) {
 
     try {
 
-      // Swytchcode execution
-      const command =
-        `swytchcode exec "v1beta.{property}:runreport.create" '${JSON.stringify(input).replace(/'/g, "'\\''")}'`;
-
-      const { stdout, stderr } = await execAsync(command);
-
-      if (stderr) {
-        server.log.error(stderr);
-        return reply.status(500).send({ error: stderr });
-      }
-
-      const result = JSON.parse(stdout);
+      // Swytchcode execution via SDK
+      const result = await swytchExec("v1beta.{property}:runreport.create", input);
 
       return result;
 
-    } catch (err) {
+    } catch (err: any) {
 
       server.log.error(err);
-      return reply.status(500).send({ error: "Swytchcode execution failed" });
+      return reply.status(500).send({ error: err.message || "Swytchcode execution failed" });
 
     }
 
