@@ -13,6 +13,7 @@ import oauthRoutes from "./routes/oauth";
 import subscriptionRoutes from "./routes/subscriptions";
 import emailReportsRoutes from "./routes/email_reports";
 import stripeRoutes from "./routes/stripe";
+import testEmailRoutes from "./routes/test-email";
 
 import { startEmailReportsCron } from "./services/email_reports";
 import { startAnalyticsCron } from "./cron/analyticsSync";
@@ -61,6 +62,9 @@ const start = async () => {
 
     // Stripe routes
     await server.register(stripeRoutes, { prefix: "/api" });
+
+    // Test email routes (disabled in production)
+    await server.register(testEmailRoutes, { prefix: "/api" });
 
     // Health check
     server.get("/health", async () => {
