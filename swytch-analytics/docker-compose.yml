@@ -78,5 +78,18 @@ services:
     env_file:
       - .env.local
 
+  # ── Nginx Reverse Proxy ────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: swytch_nginx
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - server
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
 volumes:
   db_data:
