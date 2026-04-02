@@ -6,6 +6,8 @@ import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
 import Input from "@/components/ui/Input";
 
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 const TIME_ZONES = [
     { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
     { value: "America/New_York", label: "Eastern Time (ET)" },
@@ -70,7 +72,7 @@ export default function GAKeyModal({
                 setLoading(true);
 
                 const res = await fetch(
-                    "http://localhost:4000/api/ga/properties",
+                    `${BACKEND}/api/ga/properties`,
                     { credentials: "include" }
                 );
 
@@ -121,7 +123,7 @@ export default function GAKeyModal({
     const handleOAuthConnect = async () => {
         try {
             setLoading(true);
-            const res = await fetch("http://localhost:4000/api/ga/oauth/url", { credentials: "include" });
+            const res = await fetch(`${BACKEND}/api/ga/oauth/url`, { credentials: "include" });
             const data = await res.json();
             if (data.url) {
                 window.location.href = data.url;
@@ -142,7 +144,7 @@ export default function GAKeyModal({
             setCreating(true);
             setCreateError("");
 
-            const res = await fetch("http://localhost:4000/api/ga/properties/create", {
+            const res = await fetch(`${BACKEND}/api/ga/properties/create`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

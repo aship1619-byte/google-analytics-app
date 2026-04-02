@@ -13,7 +13,7 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         try {
-            await fetch("http://localhost:4000/api/auth", {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/auth`, {
                 method: "DELETE",
                 credentials: "include",
             });
@@ -42,8 +42,8 @@ export default function Navbar() {
                     <Link
                         href="/dashboard"
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${pathname === "/dashboard"
-                                ? "bg-[#EDE8E0] text-[#1A1814]"
-                                : "text-[#8C8578] hover:bg-[#EDE8E0] hover:text-[#1A1814]"
+                            ? "bg-[#EDE8E0] text-[#1A1814]"
+                            : "text-[#8C8578] hover:bg-[#EDE8E0] hover:text-[#1A1814]"
                             }`}
                     >
                         Dashboard
@@ -51,8 +51,8 @@ export default function Navbar() {
                     <Link
                         href="/settings"
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${pathname === "/settings"
-                                ? "bg-[#EDE8E0] text-[#1A1814]"
-                                : "text-[#8C8578] hover:bg-[#EDE8E0] hover:text-[#1A1814]"
+                            ? "bg-[#EDE8E0] text-[#1A1814]"
+                            : "text-[#8C8578] hover:bg-[#EDE8E0] hover:text-[#1A1814]"
                             }`}
                     >
                         Settings
@@ -60,8 +60,8 @@ export default function Navbar() {
                     <Link
                         href="/billing"
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${pathname === "/billing"
-                                ? "bg-[#EDE8E0] text-[#1A1814]"
-                                : "text-[#8C8578] hover:bg-[#EDE8E0] hover:text-[#1A1814]"
+                            ? "bg-[#EDE8E0] text-[#1A1814]"
+                            : "text-[#8C8578] hover:bg-[#EDE8E0] hover:text-[#1A1814]"
                             }`}
                     >
                         Billing
