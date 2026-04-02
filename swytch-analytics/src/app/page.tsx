@@ -827,7 +827,13 @@ export default function LandingPage() {
             <p className="text-[14px] text-[#524B40] font-bold tracking-tight">
               © {new Date().getFullYear()} Statsy.in. All rights reserved.
             </p>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center flex-wrap gap-6">
+              <Link href="/privacy" className="text-[14px] text-[#524B40] hover:text-white transition-colors duration-200 underline underline-offset-2">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-[14px] text-[#524B40] hover:text-white transition-colors duration-200 underline underline-offset-2">
+                Terms of Service
+              </Link>
               <SwytchCodeLogo hideIcon iconSize="h-4" textSize="text-[14px]" theme="dark" withLabel="Built with" />
             </div>
           </div>
