@@ -5,6 +5,7 @@ import { Logo } from "@/components/ui/Logo";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/api";
 
 export default function Navbar() {
     const pathname = usePathname();
@@ -13,10 +14,7 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/auth`, {
-                method: "DELETE",
-                credentials: "include",
-            });
+            await apiRequest("/auth", { method: "DELETE" });
         } catch (e) {
             console.error("Failed to call backend logout", e);
         } finally {
