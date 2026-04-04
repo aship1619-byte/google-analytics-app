@@ -4,7 +4,7 @@ import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
     title: "Statsy",
-    description: "Google Analytics dashboard powered by SwytchCode",
+    description: "Statsy — Your Google Analytics dashboard, beautifully simplified.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

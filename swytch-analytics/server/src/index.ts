@@ -64,7 +64,9 @@ const start = async () => {
     await server.register(stripeRoutes, { prefix: "/api" });
 
     // Test email routes (disabled in production)
-    await server.register(testEmailRoutes, { prefix: "/api" });
+    if (process.env.NODE_ENV !== "production") {
+        await server.register(testEmailRoutes, { prefix: "/api" });
+    }
 
     // Health check
     server.get("/health", async () => {

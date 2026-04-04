@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function Navbar() {
     const pathname = usePathname();
-    const { signOut } = useAuth();
+    const { signOut, user } = useAuth();
     const router = useRouter();
 
     const handleLogout = async () => {
@@ -63,7 +63,7 @@ export default function Navbar() {
                 {/* Right — User + Logout */}
                 <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#EDE8E0] flex items-center justify-center text-sm font-semibold text-[#1A1814] select-none">
-                        U
+                        {user?.displayName?.[0]?.toUpperCase() ?? "U"}
                     </div>
                     <button
                         onClick={handleLogout}
