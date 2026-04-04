@@ -16,7 +16,19 @@ async function verifyFirebaseIdToken(idToken: string) {
 
 export default async function authRoutes(server: FastifyInstance) {
 
-    server.post("/auth", async (request, reply) => {
+    server.post("/auth", {
+        config: {
+            rateLimit: {
+                max: 10,
+                timeWindow: "1 minute",
+                errorResponseBuilder: () => ({
+                    statusCode: 429,
+                    error: "Too Many Requests",
+                    message: "Too many login attempts. Please wait a minute and try again.",
+                }),
+            },
+        },
+    }, async (request, reply) => {
         const { idToken, accessToken, refreshToken } = request.body as { idToken: string, accessToken?: string, refreshToken?: string };
 
         if (!idToken) {

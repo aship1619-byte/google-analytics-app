@@ -3,6 +3,7 @@ import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import fastifyJwt from "@fastify/jwt";
 import fastifyCookie from "@fastify/cookie";
+import rateLimit from "@fastify/rate-limit";
 
 import mysqlPlugin from "./plugins/mysql";
 import authRoutes from "./routes/auth";
@@ -30,6 +31,10 @@ const start = async () => {
     });
 
     await server.register(fastifyCookie);
+
+    await server.register(rateLimit, {
+        global: false, // only applies where explicitly configured
+    });
 
     await server.register(fastifyJwt, {
         secret: process.env.JWT_SECRET || "dev_secret_change_in_production",
