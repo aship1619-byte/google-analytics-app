@@ -100,6 +100,13 @@ export default function DashboardPage() {
             return;
         }
 
+        // ── Clean up OAuth success redirect ──────────────────────
+        const oauthConnected = urlParams.get('connected');
+        if (oauthConnected === 'true') {
+            // Strip ?connected=true from URL without reload
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
         const storedSelected = localStorage.getItem(SELECTED_KEY);
         const storedMetrics = localStorage.getItem(METRICS_KEY);
 
