@@ -1,9 +1,23 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, User as FirebaseUser } from "firebase/auth";
+import {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    ReactNode
+} from "react";
+import {
+    onAuthStateChanged,
+    signInWithPopup,
+    signOut as firebaseSignOut,
+    User as FirebaseUser,
+    GoogleAuthProvider
+} from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
-import { GoogleAuthProvider } from "firebase/auth";
+import { apiRequest } from "@/lib/api";
+
+// ── Types ────────────────────────────────────────────────────
 type User = {
     uid: string;
     email: string | null;
@@ -25,52 +39,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-            if (firebaseUser) {
-                setUser({
-                    uid: firebaseUser.uid,
-                    email: firebaseUser.email,
-                    displayName: firebaseUser.displayName,
-                    photoURL: firebaseUser.photoURL,
-                });
-            } else {
-                setUser(null);
+        const unsubscribe = onAuthStateChanged(
+            auth,
+            (firebaseUser: FirebaseUser | null) => {
+                if (firebaseUser) {
+                    setUser({
+                        uid: firebaseUser.uid,
+                        email: firebaseUser.email,
+                        displayName: firebaseUser.displayName,
+                        photoURL: firebaseUser.photoURL,
+                    });
+                } else {
+                    setUser(null);
+                    // Clean up localStorage when Firebase session ends
+                    localStorage.removeItem("user_name");
+                }
+                setLoading(false);
             }
-            setLoading(false);
-        });
+        );
         return () => unsubscribe();
     }, []);
 
     const signInWithGoogle = async (): Promise<void> => {
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
+        const result = await signInWithPopup(auth, googleProvider);
 
-            const idToken = await result.user.getIdToken();
+        const idToken = await result.user.getIdToken();
 
-            const credential = GoogleAuthProvider.credentialFromResult(result);
-            const accessToken = credential?.accessToken;
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const accessToken = credential?.accessToken;
 
-            const res = await fetch("http://localhost:4000/api/auth", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    idToken,
-                    accessToken: credential?.accessToken || null
-                })
-            });
+        // Firebase stores the identity provider's refresh token here if access_type=offline
+        const googleRefreshToken = (result as any)._tokenResponse?.refreshToken || null;
 
-            if (!res.ok) {
-                throw new Error("Backend auth failed");
-            }
+        console.log("Captured Google Refresh Token:", googleRefreshToken ? "YES" : "NO");
 
-        } catch (err) {
-            throw err;
+        const res = await apiRequest("/auth", {
+            method: "POST",
+            body: JSON.stringify({
+                idToken,
+                accessToken: accessToken || null,
+                refreshToken: googleRefreshToken
+            })
+        });
+
+        if (!res.ok) {
+            // Backend failed — sign out of Firebase too
+            // so both states stay in sync
+            await firebaseSignOut(auth);
+            throw new Error("Session could not be created. Please try again.");
+        }
+
+        // ── Store display name in localStorage ───────────────
+        // Only non-sensitive data — never store tokens or uid
+        const displayName = result.user.displayName;
+        if (displayName) {
+            localStorage.setItem("user_name", displayName);
         }
     };
 
     const signOut = async (): Promise<void> => {
+        // ── Clear backend cookie first ────────────────────────
+        await apiRequest("/auth", { method: "DELETE" });
+
+        // ── Then sign out of Firebase ─────────────────────────
         await firebaseSignOut(auth);
+
+        // ── Clean up localStorage ─────────────────────────────
+        localStorage.removeItem("user_name");
+
         setUser(null);
     };
 
