@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/layout/Navbar";
 import GAKeyModal from "@/components/dashboard/GAKeyModal";
 import MetricCard from "@/components/dashboard/MetricCard";
@@ -24,7 +25,7 @@ const SELECTED_KEY = "ga_selected_property";
 const METRICS_KEY = "dashboard_metrics";
 
 const METRIC_LABELS: Record<string, string> = {
-    users: "VisitorsThis Week",
+    users: "Visitors This Week",
     sessions: "Sessions",
     pageViews: "Page Views",
     bounceRate: "Bounce Rate",
@@ -34,7 +35,27 @@ const METRIC_LABELS: Record<string, string> = {
     conversionRate: "Conversion Rate"
 };
 
+const METRIC_ACCENTS: Record<string, "navy" | "warm" | "green" | "default"> = {
+    users: "navy",
+    sessions: "navy",
+    pageViews: "warm",
+    bounceRate: "warm",
+    avgSessionDuration: "warm",
+    newUsers: "green",
+    customerActions: "green",
+    conversionRate: "green"
+};
+
+function getGreeting(): string {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+}
+
 export default function DashboardPage() {
+    const { user } = useAuth();
+    const firstName = user?.displayName?.split(" ")[0] || "there";
 
     const [properties, setProperties] = useState<Array<{ propertyId: string, displayName: string }>>([]);
     const [selectedProperty, setSelectedProperty] = useState<string>("");
@@ -296,12 +317,18 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-8">
 
                     <div>
-                        <h1 className="text-3xl text-[#1A1814] mb-1">
-                            Dashboard
+                        <p className="text-xs font-medium text-[#8C8578] uppercase tracking-widest mb-1">Dashboard</p>
+                        <h1 className="text-3xl text-[#1A1814] mb-1" style={{ fontFamily: "var(--font-display)" }}>
+                            {getGreeting()}, {firstName} 👋
                         </h1>
-                        <p className="text-sm text-[#8C8578]">
-                            Monitor your Google Analytics metrics
-                        </p>
+                        <div className="flex items-center gap-3">
+                            <p className="text-sm text-[#8C8578]">
+                                Here&apos;s what&apos;s happening with your analytics
+                            </p>
+                            <span className="text-xs text-[#B0A99E]">
+                                · Last synced {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            </span>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -367,6 +394,7 @@ export default function DashboardPage() {
                                             title={METRIC_LABELS[metric] || metric}
                                             value={loadingAnalytics ? "..." : val}
                                             icon={ICONS[metric] || <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
+                                            accent={METRIC_ACCENTS[metric] || "default"}
                                         />
                                     );
                                 })}

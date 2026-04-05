@@ -319,6 +319,7 @@ export default async function gaRoutes(server: FastifyInstance) {
             return reply.status(500).send({ error: "Failed to fetch hourly data" });
         }
     });
+
     server.get("/ga/insights/:propertyId", async (request, reply) => {
         try {
             await request.jwtVerify({ onlyCookie: true });
