@@ -6,6 +6,7 @@
 
 import { FastifyInstance } from "fastify";
 import { getPool } from "../plugins/mysql";
+import { getOrRefreshAccessToken } from "../services/googleAuth";
 
 async function getCachedAnalytics(propertyId: string) {
     const pool = getPool();
@@ -61,7 +62,7 @@ export default async function gaRoutes(server: FastifyInstance) {
     server.get("/ga/properties", async (request, reply) => {
         try {
             await request.jwtVerify({ onlyCookie: true });
-            const accessToken = request.cookies.google_access_token;
+            const accessToken = await getOrRefreshAccessToken(request, reply, server);
             if (!accessToken) return reply.status(401).send({ error: "Google access token missing" });
 
             const res = await fetch("https://analyticsadmin.googleapis.com/v1beta/accountSummaries", {
@@ -103,7 +104,7 @@ export default async function gaRoutes(server: FastifyInstance) {
     server.post("/ga/properties/create", async (request, reply) => {
         try {
             await request.jwtVerify({ onlyCookie: true });
-            const accessToken = request.cookies.google_access_token;
+            const accessToken = await getOrRefreshAccessToken(request, reply, server);
             if (!accessToken) return reply.status(401).send({ error: "Google access token missing" });
 
             const { parent, displayName, timeZone, websiteUrl } = request.body as {
@@ -161,7 +162,7 @@ export default async function gaRoutes(server: FastifyInstance) {
     server.get("/ga/streams/:propertyId", async (request, reply) => {
         try {
             await request.jwtVerify({ onlyCookie: true });
-            const accessToken = request.cookies.google_access_token;
+            const accessToken = await getOrRefreshAccessToken(request, reply, server);
             if (!accessToken) return reply.status(401).send({ error: "Google access token missing" });
 
             const { propertyId } = request.params as { propertyId: string };

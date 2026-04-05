@@ -72,6 +72,9 @@ export default function GAKeyModal({
 
         if (!isOpen) return;
 
+        // Reset auth state so stale flags from a previous open don't stick
+        setNeedsAuth(false);
+
         const fetchProperties = async () => {
 
             try {
