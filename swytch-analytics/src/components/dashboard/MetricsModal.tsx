@@ -1,26 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 
 const ALL_METRICS = [
-  { key: "users", label: "Users" },
+  { key: "users", label: "Visitors" },
+  { key: "newUsers", label: "New Visitors" },
   { key: "sessions", label: "Sessions" },
   { key: "pageViews", label: "Page Views" },
   { key: "bounceRate", label: "Bounce Rate" },
   { key: "avgSessionDuration", label: "Avg Session Duration" },
-  { key: "newUsers", label: "New Users" },
+  { key: "customerActions", label: "Customer Actions" },
+  { key: "conversionRate", label: "Conversion Rate" },
 ];
 
 type MetricsModalProps = {
   isOpen: boolean;
   onCloseAction: () => void;
   onSaveAction: (metrics: string[]) => void;
+  currentSelection: string[];
 };
 
-export default function MetricsModal({ isOpen, onCloseAction, onSaveAction }: MetricsModalProps) {
-  const [selected, setSelected] = useState<string[]>(["users", "sessions", "pageViews", "bounceRate"]);
+export default function MetricsModal({ isOpen, onCloseAction, onSaveAction, currentSelection }: MetricsModalProps) {
+  const [selected, setSelected] = useState<string[]>(currentSelection.length > 0 ? currentSelection : ["users", "newUsers", "customerActions", "conversionRate"]);
+
+  // Reset selected state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelected(currentSelection.length > 0 ? currentSelection : ["users", "newUsers", "customerActions", "conversionRate"]);
+    }
+  }, [isOpen, currentSelection]);
 
   const toggle = (key: string) => {
     setSelected((prev) =>
